@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Saif Learning — Modes Game (Fruits / Colors / Relations)</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1: #E8F9FF; --bg2:#F6F3FF; --card:#fff; --accent:#5BB6F7; --accent2:#7EE6B8;
+    --muted:#6B7280; --success:#16A34A; --danger:#EF4444; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;font-family:'Poppins',system-ui,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));
+    color:#07304a;padding:14px;-webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:1100px;margin:0 auto}
+  .header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .logo{background:linear-gradient(90deg,var(--accent2),var(--accent));color:white;padding:10px 14px;border-radius:12px;font-weight:800}
+  .title{font-weight:800;font-size:18px}
+  .subtitle{color:var(--muted);font-size:13px}
+
+  .card{background:var(--card);border-radius:16px;padding:14px;box-shadow:0 12px 36px rgba(8,16,40,0.06);margin-bottom:12px}
+  button.btn{background:linear-gradient(90deg,var(--accent2),var(--accent));color:white;border:0;padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid rgba(94,163,255,0.16);padding:9px 12px;border-radius:12px;color:var(--accent);font-weight:700;cursor:pointer}
+
+  /* Intro layout */
+  #intro{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;min-height:420px}
+  #threeWrap{width:560px;height:360px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#EAF6FF,#FFF)}
+  .introText{flex:1;min-width:260px}
+  .name{font-size:26px;font-weight:800}
+  .meta{display:inline-block;margin-top:8px;background:#F1F5F9;padding:6px 10px;border-radius:999px;font-weight:700;color:#07203b}
+  .controls{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap}
+
+  /* Mode selection */
+  #modes{display:none;gap:12px;align-items:stretch}
+  .modesRow{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+  .modeCard{flex:1;min-width:220px;border-radius:12px;padding:14px;background:linear-gradient(180deg,#ffffff,#fbfdff);box-shadow:0 10px 30px rgba(2,6,23,0.04)}
+  .modeTitle{font-weight:800;margin-bottom:6px}
+  .modeDesc{color:var(--muted);font-size:13px;margin-bottom:10px}
+
+  /* Game area */
+  #gameArea{display:none}
+  .hud{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .badge{background:#F1F5F9;padding:8px 12px;border-radius:999px;font-weight:700}
+  .playGrid{display:flex;gap:14px;flex-wrap:wrap}
+  .preview{width:420px;height:280px;border-radius:12px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(2,6,23,0.06)}
+  .controlsCol{flex:1;min-width:280px}
+  label{display:block;margin-bottom:8px;color:var(--muted)}
+  input[type="text"]{width:100%;padding:12px;border-radius:10px;border:1px solid #E6EEF9;font-size:16px}
+  .row{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .feedback{min-height:30px;margin-top:10px;font-weight:800}
+  .correct{color:var(--success)} .wrong{color:var(--danger)} .neutral{color:var(--muted)}
+
+  /* decorative 3D shapes canvas behind game */
+  #decor{position:fixed;right:10px;bottom:10px;pointer-events:none;width:280px;height:220px;opacity:0.85}
+
+  /* summary / final */
+  #summary{display:none;text-align:center;padding:18px}
+  .big{font-size:40px;font-weight:800;color:var(--accent)}
+
+  /* responsive */
+  @media (max-width:980px){
+    #threeWrap{width:100%;height:240px}
+    .preview{width:100%;height:220px}
+    .playGrid{flex-direction:column}
+    #modes{display:flex;flex-direction:column}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo">Saif</div>
+    <div>
+      <div class="title">Saif Learning — Modes</div>
+      <div class="subtitle">دوست، بینر پڑھیں — پھر Fruit, Color یا Relation موڈ منتخب کریں</div>
+    </div>
+  </div>
+
+  <!-- INTRO with 3D boy holding banner -->
+  <div id="intro" class="card">
+    <div id="threeWrap" aria-hidden="true"></div>
+
+    <div class="introText">
+      <div class="name">Saif ul Rehman — عمر 24</div>
+      <div class="meta">شہر: Naukot, Sindh, Pakistan</div>
+      <p class="small" style="margin-top:12px">دوست، نیچے بینر میں پیغام نظر آئے گا۔ بینر پڑھ کر یا "Start" دباکر آپ game state میں جائیں گے۔</p>
+      <div class="controls">
+        <button id="readBanner" class="btn">بینر پڑھیں • Play Welcome</button>
+        <button id="goToModes" class="btn">Game State پر جائیں</button>
+        <button id="demoStart" class="ghost">How to Play</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODE SELECTION -->
+  <div id="modes" class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-weight:800">Modes — موڈ منتخب کریں</div>
+      <div style="color:var(--muted)">ہر موڈ میں 2 راؤنڈ × 10 سوال = 20 پوائنٹس</div>
+    </div>
+
+    <div class="modesRow">
+      <div class="modeCard" id="modeFruit">
+        <div class="modeTitle">🍎 Fruit Game</div>
+        <div class="modeDesc">تصویر دیکھیں، پھل کا انگریزی نام لکھیں۔ پہلی کوشش درست ہو تو پوائنٹ۔</div>
+        <button class="btn" data-mode="fruit">شروع کریں (Fruit)</button>
+      </div>
+
+      <div class="modeCard" id="modeColor">
+        <div class="modeTitle">🎨 Color Game</div>
+        <div class="modeDesc">رنگ پہچانیں اور اس کا انگریزی نام ٹائپ کریں۔</div>
+        <button class="btn" data-mode="color">شروع کریں (Color)</button>
+      </div>
+
+      <div class="modeCard" id="modeRelation">
+        <div class="modeTitle">👪 Relationship Game</div>
+        <div class="modeDesc">رشتوں کے نام سیکھیں — انگریزی نام لکھیں۔</div>
+        <button class="btn" data-mode="relation">شروع کریں (Relation)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME AREA -->
+  <div id="gameArea" class="card">
+    <div class="hud">
+      <div class="badge">Mode: <strong id="modeLabel">—</strong></div>
+      <div class="badge">Round: <strong id="roundLabel">1</strong> / 2</div>
+      <div class="badge">Q: <strong id="qLabel">1</strong> / 10</div>
+      <div class="badge">Score: <strong id="totalScore">0</strong></div>
+    </div>
+
+    <div class="playGrid">
+      <div class="preview" id="previewWrap">
+        <img id="itemImg" src="" alt="item image" style="width:100%;height:100%;object-fit:cover;border-radius:8px"/>
+      </div>
+
+      <div class="controlsCol">
+        <label>انگریزی نام یہاں لکھیں</label>
+        <input id="answerInput" type="text" placeholder="مثال: Apple" autocomplete="off"/>
+
+        <div class="row" style="margin-top:8px">
+          <button id="checkBtn" class="btn">چیک کریں</button>
+          <button id="skipBtn" class="ghost">اسکیپ</button>
+          <button id="ttsBtn" class="ghost">بول کر سنائیں 🔊</button>
+          <div style="margin-inline-start:auto;color:var(--muted)">پہلی درست کوشش = 1 پوائنٹ</div>
+        </div>
+
+        <div id="fb" class="feedback neutral"></div>
+
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+          <input id="fileUpload" type="file" accept="image/*"/>
+          <div style="color:var(--muted);font-size:13px">اپنی تصویر اپلوڈ کریں (محفوظ رہے گی)</div>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button id="saveBtn" class="ghost">حالت محفوظ کریں</button>
+          <button id="quitBtn" class="ghost">موڈ چھوڑیں</button>
+        </div>
+
+        <div style="margin-top:10px;color:var(--muted)">راؤنڈ اسکور: <strong id="roundScore">0</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARY & FINAL -->
+  <div id="summary" class="card">
+    <div style="font-weight:800">Round Summary</div>
+    <div class="big" id="summaryScore">0 / 10</div>
+    <div style="margin-top:8px">
+      <button id="nextBtn" class="btn">اگلا راؤنڈ</button>
+      <button id="modeBack" class="ghost">Back to Modes</button>
+    </div>
+  </div>
+
+  <div id="final" class="card" style="display:none;text-align:center">
+    <div style="font-weight:800">Mode Complete</div>
+    <div class="big" id="finalScore">0 / 20</div>
+    <div style="margin-top:8px">
+      <button id="playAgain" class="btn">اس موڈ کو دوبارہ کھیلیں</button>
+      <button id="goModes" class="ghost">منتخب کریں دوسرے موڈ</button>
+    </div>
+  </div>
+
+  <div class="footer small" style="margin-top:10px;color:var(--muted)">Made with ❤️ — Saif Graphic, Naukot</div>
+</div>
+
+<!-- decorative small 3D canvas (shapes) -->
+<canvas id="decor"></canvas>
+
+<!-- Three.js CDN for intro banner & decorative shapes -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.154.0/examples/js/controls/OrbitControls.min.js"></script>
+
+<script>
+/* ========================= Urdu style openings ========================= */
+function dostLog(msg){ console.log('دوست:', msg) }
+
+/* ========================= 3D Intro — boy holding banner (canvas-texture) ========================= */
+(function intro3D(){
+  const wrap = document.getElementById('threeWrap');
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xEAF6FF);
+  const camera = new THREE.PerspectiveCamera(40, W/H, 0.1, 1000);
+  camera.position.set(0, 1.6, 4);
+  const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setSize(W,H); renderer.setPixelRatio(window.devicePixelRatio || 1);
+  wrap.appendChild(renderer.domElement);
+
+  // lights
+  scene.add(new THREE.HemisphereLight(0xffffff,0x888888,0.9));
+  const dl = new THREE.DirectionalLight(0xffffff,0.6); dl.position.set(5,10,7); scene.add(dl);
+
+  // simple boy group
+  const group = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.9,1.2,24), new THREE.MeshStandardMaterial({color:0x7EE6B8}));
+  body.position.y=-0.2; group.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.48,32,32), new THREE.MeshStandardMaterial({color:0xffe0c8})); head.position.y=0.9; group.add(head);
+  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.5,24,24), new THREE.MeshStandardMaterial({color:0x0f172a})); hair.scale.y=0.6; hair.position.y=1.02; group.add(hair);
+  const leftArm = new THREE.Mesh(new THREE.CapsuleGeometry(0.11,0.6,4,8), new THREE.MeshStandardMaterial({color:0xffe0c8}));
+  leftArm.position.set(-0.85,0.2,0); leftArm.rotation.z=0.5; group.add(leftArm);
+  const rightArm = leftArm.clone(); rightArm.position.set(0.85,0.2,0); rightArm.rotation.z=-0.5; group.add(rightArm);
+  group.position.y=-0.2; scene.add(group);
+
+  // banner canvas texture
+  const canvas = document.createElement('canvas'); canvas.width=1200; canvas.height=300; const ctx = canvas.getContext('2d');
+  function drawBanner(t1, t2){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    const g = ctx.createLinearGradient(0,0,canvas.width,0); g.addColorStop(0,'#60A5FA'); g.addColorStop(1,'#6EE7B7');
+    ctx.fillStyle = g; ctx.fillRect(10,30,canvas.width-20,240);
+    ctx.fillStyle = '#07203b'; ctx.font='700 38px Poppins,Arial'; ctx.textAlign='center';
+    ctx.fillText(t1, canvas.width/2, 120);
+    ctx.font='600 26px Poppins,Arial'; ctx.fillText(t2, canvas.width/2, 170);
+  }
+  drawBanner('Welcome to Our Children game', 'from Saif Graphic (Naukot Sindh Pakistan)');
+  const texture = new THREE.CanvasTexture(canvas);
+  const banner = new THREE.Mesh(new THREE.PlaneGeometry(3.0,0.78), new THREE.MeshBasicMaterial({map:texture}));
+  banner.position.set(0,0.25,0.95); scene.add(banner);
+  const lp = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,1.1,8), new THREE.MeshStandardMaterial({color:0x7c8b9a})); lp.position.set(-1.4,0.2,0.94); lp.rotation.z=0.15; scene.add(lp);
+  const rp = lp.clone(); rp.position.set(1.4,0.2,0.94); scene.add(rp);
+
+  // animate
+  let t=0;
+  function anim(){
+    t+=0.02;
+    group.rotation.y = Math.sin(t*0.35)*0.06;
+    group.position.y = -0.18 + Math.sin(t*0.7)*0.02;
+    banner.rotation.z = Math.sin(t*1.2)*0.03;
+    lp.rotation.x = Math.sin(t*1.6)*0.15 - 0.15;
+    rp.rotation.x = Math.sin(t*1.6)*0.15 + 0.15;
+    renderer.render(scene, camera);
+    requestAnimationFrame(anim);
+  }
+  anim();
+
+  // expose function to update banner text if needed
+  window.updateBanner = function(line1,line2){
+    drawBanner(line1,line2); texture.needsUpdate=true;
+  };
+
+  window.addEventListener('resize', ()=> {
+    const W2 = wrap.clientWidth, H2 = wrap.clientHeight; renderer.setSize(W2,H2); camera.aspect=W2/H2; camera.updateProjectionMatrix();
+  });
+})();
+
+/* ========================= decorative floating shapes (canvas) ========================= */
+(function decorShapes(){
+  const c = document.getElementById('decor');
+  function fit(){ c.width = c.clientWidth * devicePixelRatio; c.height = c.clientHeight * devicePixelRatio; c.style.width = c.clientWidth + 'px'; c.style.height = c.clientHeight + 'px'; }
+  fit(); window.addEventListener('resize', fit);
+  const ctx = c.getContext('2d');
+  let items = [];
+  for(let i=0;i<10;i++){
+    items.push({x: Math.random()*c.width, y: Math.random()*c.height, r: 6+Math.random()*18, vx:(Math.random()-0.5)*0.6, vy:(Math.random()-0.5)*0.6, col: ['#60A5FA','#FDE68A','#7EE6B8','#FCA5A5'][i%4]})
+  }
+  function tick(){
+    ctx.clearRect(0,0,c.width,c.height);
+    items.forEach(it=>{
+      it.x += it.vx; it.y += it.vy;
+      if(it.x < -50) it.x = c.width+50;
+      if(it.x > c.width+50) it.x = -50;
+      if(it.y < -50) it.y = c.height+50;
+      if(it.y > c.height+50) it.y = -50;
+      ctx.beginPath(); ctx.fillStyle = it.col; ctx.globalAlpha = 0.9;
+      ctx.ellipse(it.x, it.y, it.r, it.r*0.6, Math.PI*0.2, 0, Math.PI*2); ctx.fill();
+    });
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+
+/* ========================= DATASETS (2 Rounds × 10 each per mode → 20 per mode) ========================= */
+function makeFruitSVG(emoji,label){
+  const w=1000,h=700; const g1='#F0F9FF', g2='#FEF3C7';
+  return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="${g1}"/><g transform="translate(${w/2},${h/2-40})"><circle r="160" fill="#fff"/><text y="30" font-size="160" text-anchor="middle">${emoji}</text></g><text x="50%" y="${h-48}" font-size="42" text-anchor="middle" font-family="Poppins,Arial" font-weight="700">${label}</text></svg>`);
+}
+function makeColorSVG(name,hex){
+  const w=1000,h=700; return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="${hex}"/><rect x="30" y="${h-140}" rx="14" width="${w-60}" height="110" fill="rgba(255,255,255,.85)"/><text x="50%" y="${h-70}" font-size="44" text-anchor="middle" font-family="Poppins,Arial" font-weight="800">${name}</text></svg>`);
+}
+function makeRelationSVG(emoji,label){
+  const w=1000,h=700; const g1='#E9D5FF', g2='#DBEAFE';
+  return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="${g1}"/><text x="50%" y="48%" font-size="140" text-anchor="middle">${emoji}</text><text x="50%" y="${h-60}" font-size="44" text-anchor="middle" font-family="Poppins,Arial" font-weight="800">${label}</text></svg>`);
+}
+
+// Fruits: 20 items (2 rounds)
+const FRUITS = [
+ ['Apple','🍎'],['Banana','🍌'],['Orange','🍊'],['Mango','🥭'],['Grapes','🍇'],
+ ['Pineapple','🍍'],['Strawberry','🍓'],['Watermelon','🍉'],['Pear','🍐'],['Peach','🍑'],
+ ['Kiwi','🥝'],['Cherry','🍒'],['Papaya','🟠'],['Guava','🟢'],['Pomegranate','🔴'],
+ ['Lemon','🍋'],['Lime','🟢'],['Coconut','🥥'],['Fig','🟣'],['Dates','🟤']
+].map(([n,e])=>({type:'fruit',name:n,image:makeFruitSVG(e,n)}));
+
+// Colors: 20 unique names (we will create 20 by repeating palette + variants)
+const COLORS = [
+ ['Red','#EF4444'],['Blue','#3B82F6'],['Green','#10B981'],['Yellow','#F59E0B'],['Orange','#F97316'],
+ ['Purple','#8B5CF6'],['Pink','#EC4899'],['Brown','#92400E'],['Black','#111827'],['White','#F9FAFB'],
+ ['Gray','#6B7280'],['Cyan','#06B6D4'],['Magenta','#DB2777'],['Maroon','#7F1D1D'],['Teal','#0D9488'],
+ ['Olive','#6B8E23'],['Violet','#7C3AED'],['Indigo','#3B82F6'],['Beige','#F5F5DC'],['Lavender','#E6E6FA']
+].map(([n,h])=>({type:'color',name:n,image:makeColorSVG(n,h)}));
+
+// Relations: 20 (we'll mix with extended)
+const RELS = [
+ ['Father','👨'],['Mother','👩'],['Brother','👦'],['Sister','👧'],['Grandfather','👴'],
+ ['Grandmother','👵'],['Uncle','🧔'],['Aunt','👩‍🦳'],['Son','🧒'],['Daughter','👧'],
+ ['Cousin','🧑'],['Friend','🤝'],['Husband','🤵'],['Wife','👰'],['Teacher','👩‍🏫'],
+ ['Neighbor','👥'],['Coach','🏃‍♂️'],['Doctor','🩺'],['Baby','👶'],['Parent','👪']
+].map(([n,e])=>({type:'relation',name:n,image:makeRelationSVG(e,n)}));
+
+/* DATA layout: each mode has 20 items (2 rounds x 10) */
+const DATA = { fruit: FRUITS, color: COLORS, relation: RELS };
+
+/* ========== State variables ========== */
+let currentMode = null; // 'fruit'|'color'|'relation'
+let roundIndex = 1; // 1..2
+let qIndex = 0; // 0..9
+let totalScore = 0;
+let roundScore = 0;
+let attemptCount = 0;
+const STORAGE_KEY = 'saif_modes_state_v1';
+const IMG_MAP_KEY = 'saif_modes_imgmap_v1';
+let customImageMap = {}; // name -> dataURL
+
+/* ========== DOM refs ========== */
+const readBannerBtn = document.getElementById('readBanner');
+const goToModesBtn = document.getElementById('goToModes');
+const demoStartBtn = document.getElementById('demoStart');
+const modesDiv = document.getElementById('modes');
+const modeButtons = document.querySelectorAll('.modeCard button');
+const gameArea = document.getElementById('gameArea');
+const modeLabel = document.getElementById('modeLabel');
+const roundLabel = document.getElementById('roundLabel');
+const qLabel = document.getElementById('qLabel');
+const totalScoreEl = document.getElementById('totalScore');
+const itemImg = document.getElementById('itemImg');
+const answerInput = document.getElementById('answerInput');
+const checkBtn = document.getElementById('checkBtn');
+const skipBtn = document.getElementById('skipBtn');
+const ttsBtn = document.getElementById('ttsBtn');
+const fb = document.getElementById('fb');
+const fileUpload = document.getElementById('fileUpload');
+const saveBtn = document.getElementById('saveBtn');
+const quitBtn = document.getElementById('quitBtn');
+const roundScoreEl = document.getElementById('roundScore');
+
+const summaryCard = document.getElementById('summary');
+const summaryScoreEl = document.getElementById('summaryScore');
+const nextBtn = document.getElementById('nextBtn');
+const modeBack = document.getElementById('modeBack');
+
+const finalCard = document.getElementById('final');
+const finalScoreEl = document.getElementById('finalScore');
+const playAgainBtn = document.getElementById('playAgain');
+const goModesBtn = document.getElementById('goModes');
+
+/* ======================== Utilities ======================== */
+function normalize(s){ return (s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+function loadImageMap(){ try{ customImageMap = JSON.parse(localStorage.getItem(IMG_MAP_KEY) || '{}'); }catch(e){ customImageMap = {}; } }
+function saveImageMap(){ localStorage.setItem(IMG_MAP_KEY, JSON.stringify(customImageMap)); }
+function loadState(){ try{ const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); if(s){ currentMode=s.currentMode; roundIndex=s.roundIndex; qIndex=s.qIndex; totalScore=s.totalScore; roundScore=s.roundScore; } }catch(e){} }
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({currentMode,roundIndex,qIndex,totalScore,roundScore})); }
+
+/* ======================== UI Flow ======================== */
+readBannerBtn.addEventListener('click', ()=> {
+  speak("Hello children. I am Saif ul Rehman. Welcome to our children game from Saif Graphic in Naukot Sindh Pakistan.", 'en-US');
+  setTimeout(()=> speak("دوست، ساِف ال رحمن خوش آمدید۔ یہ گیم بچوں کے لیے ہے۔", 'ur'), 1400);
+});
+
+goToModesBtn.addEventListener('click', ()=> {
+  document.getElementById('intro').style.display = 'none';
+  modesDiv.style.display = 'block';
+});
+
+demoStartBtn.addEventListener('click', ()=> alert('دوست، ہر موڈ میں 2 راؤنڈ × 10 آئٹمز ہیں۔ Fruit/Color/Relation میں کھیلیں۔'));
+
+/* mode buttons */
+modeButtons.forEach(btn => btn.addEventListener('click', (e)=>{
+  const mode = btn.dataset.mode;
+  startMode(mode);
+}));
+
+/* start a mode */
+function startMode(mode){
+  currentMode = mode;
+  roundIndex = 1; qIndex = 0; totalScore = 0; roundScore = 0; attemptCount = 0;
+  loadImageMap();
+  modesDiv.style.display = 'none';
+  document.getElementById('gameArea').style.display = 'block';
+  summaryCard.style.display = 'none';
+  finalCard.style.display = 'none';
+  updateHUD();
+  loadQuestion();
+  saveState();
+}
+
+/* update HUD */
+function updateHUD(){
+  modeLabel.textContent = currentMode ? (currentMode==='fruit' ? 'Fruit' : currentMode==='color' ? 'Color' : 'Relation') : '—';
+  roundLabel.textContent = roundIndex;
+  qLabel.textContent = qIndex+1;
+  totalScoreEl.textContent = totalScore;
+  roundScoreEl.textContent = roundScore;
+}
+
+/* load question */
+function loadQuestion(){
+  attemptCount = 0; fb.className='feedback neutral'; fb.textContent='';
+  updateHUD();
+  const item = DATA[currentMode][roundIndex>0 ? ((roundIndex-1)*10 + qIndex) : qIndex];
+  // custom image override
+  loadImageMap();
+  if(customImageMap[item.name]) itemImg.src = customImageMap[item.name];
+  else itemImg.src = item.image;
+  itemImg.alt = item.name;
+  answerInput.value = '';
+  answerInput.placeholder = `مثال: ${item.name}`;
+  answerInput.focus();
+}
+
+/* check answer */
+checkBtn.addEventListener('click', checkAnswer);
+answerInput.addEventListener('keydown', e=>{ if(e.key==='Enter') checkAnswer(); });
+
+function checkAnswer(){
+  const item = DATA[currentMode][(roundIndex-1)*10 + qIndex];
+  attemptCount++;
+  const ok = normalize(answerInput.value) === normalize(item.name);
+  if(ok){
+    fb.className='feedback correct'; fb.textContent = '✅ Correct — درست ہے';
+    if(attemptCount === 1){ totalScore++; roundScore++; }
+    updateHUD(); saveState();
+    setTimeout(()=> nextQuestion(), 700);
+  } else {
+    if(attemptCount >= 2){
+      fb.className='feedback wrong'; fb.innerHTML = `❌ غلط — صحیح: <strong>${item.name}</strong>`;
+      speak(item.name, 'en-US');
+      setTimeout(()=> nextQuestion(), 1200);
+    } else {
+      fb.className='feedback wrong';
+      const n = item.name; const hint = n.length>2 ? (n[0] + '...' + n[n.length-1]) : n;
+      fb.innerHTML = `❌ دوبارہ کوشش کریں — ہنٹ: <strong>${hint}</strong>`;
+      answerInput.focus();
+    }
+  }
+}
+
+/* skip */
+skipBtn.addEventListener('click', ()=> {
+  const it = DATA[currentMode][(roundIndex-1)*10 + qIndex];
+  fb.className='feedback neutral'; fb.innerHTML = `⏭️ Skipped — صحیح: <strong>${it.name}</strong>`;
+  setTimeout(()=> nextQuestion(), 900);
+});
+
+/* tts */
+ttsBtn.addEventListener('click', ()=> {
+  const it = DATA[currentMode][(roundIndex-1)*10 + qIndex];
+  speak(it.name,'en-US');
+});
+
+/* upload override */
+fileUpload.addEventListener('change', e=> {
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const data = ev.target.result;
+    const it = DATA[currentMode][(roundIndex-1)*10 + qIndex];
+    customImageMap[it.name] = data;
+    saveImageMap();
+    itemImg.src = data;
+    alert('تصویر محفوظ ہوگئی — یہ آئٹم کی نئی تصویر بن گئی ہے۔');
+  };
+  reader.readAsDataURL(f);
+});
+
+/* nextQuestion flow */
+function nextQuestion(){
+  qIndex++;
+  if(qIndex >= 10){
+    // round complete
+    // show summary
+    document.getElementById('summaryScore').textContent = `${roundScore} / 10`;
+    document.getElementById('summary').style.display = 'block';
+    document.getElementById('gameArea').style.display = 'none';
+    saveState();
+  } else {
+    loadQuestion();
+  }
+}
+
+/* next round button */
+nextBtn.addEventListener('click', ()=> {
+  roundIndex++;
+  qIndex = 0;
+  roundScore = 0;
+  if(roundIndex > 2){
+    // mode finished
+    finishMode();
+  } else {
+    document.getElementById('summary').style.display = 'none';
+    document.getElementById('gameArea').style.display = 'block';
+    loadQuestion();
+    saveState();
+  }
+});
+
+modeBack.addEventListener('click', ()=> {
+  // go back to modes
+  document.getElementById('summary').style.display = 'none';
+  document.getElementById('gameArea').style.display = 'none';
+  modesDiv.style.display = 'block';
+  saveState();
+});
+
+/* finish mode */
+function finishMode(){
+  document.getElementById('summary').style.display = 'none';
+  document.getElementById('gameArea').style.display = 'none';
+  finalCard.style.display = 'block';
+  finalScoreEl.textContent = `${totalScore} / 20`;
+  saveState();
+}
+
+/* final buttons */
+playAgainBtn.addEventListener('click', ()=> {
+  startMode(currentMode);
+});
+goModesBtn.addEventListener('click', ()=> {
+  finalCard.style.display = 'none';
+  modesDiv.style.display = 'block';
+});
+
+/* save & quit */
+saveBtn.addEventListener('click', ()=> { saveState(); alert('حالت محفوظ ہوگئی۔'); });
+quitBtn.addEventListener('click', ()=> {
+  if(confirm('کیا آپ موڈ چھوڑنا چاہتے ہیں؟')){
+    document.getElementById('gameArea').style.display = 'none';
+    modesDiv.style.display = 'block';
+  }
+});
+
+/* speak helper */
+function speak(text, lang='en-US'){
+  try{
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    const voices = speechSynthesis.getVoices();
+    if(voices && voices.length){
+      const v = voices.find(v=>v.lang && v.lang.startsWith(lang.split('-')[0])) || voices[0];
+      if(v) u.voice = v;
+    }
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }catch(e){ console.warn(e); }
+}
+
+/* load saved data on start: show intro (user will click) */
+(function init(){
+  loadImageMap();
+  loadState();
+  // show intro by default
+  document.getElementById('modes').style.display = 'none';
+  document.getElementById('gameArea').style.display = 'none';
+  document.getElementById('summary').style.display = 'none';
+  document.getElementById('final').style.display = 'none';
+
+  // if saved state exists and mode set, offer to resume
+  if(currentMode){
+    if(confirm('دوست، پچھلی محفوظ حالت موجود ہے — کیا آپ پچھلا سیشن Resume کرنا چاہتے ہیں؟')){
+      // resume
+      document.getElementById('intro').style.display = 'none';
+      startMode(currentMode);
+      // set indices from saved
+      loadState();
+      updateHUD(); loadQuestion();
+    } else {
+      // clear saved
+      localStorage.removeItem(STORAGE_KEY);
+      currentMode = null;
+    }
+  }
+})();
+</script>
+</body>
+</html>
